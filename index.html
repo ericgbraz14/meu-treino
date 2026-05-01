@@ -226,6 +226,43 @@ body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-t
 /* TABS */
 .tab-panel{display:none;}
 .tab-panel.active{display:block;}
+
+  /* DIET */
+  .diet-macro-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+  .diet-macro-title{font-size:.95rem;font-weight:700;margin-bottom:2px;}
+  .diet-macro-sub{font-size:.72rem;color:var(--color-text-muted);margin-bottom:14px;}
+  .macro-bars{display:flex;flex-direction:column;gap:10px;}
+  .macro-bar-item{}
+  .macro-bar-label{display:flex;justify-content:space-between;font-size:.75rem;color:var(--color-text-muted);margin-bottom:4px;}
+  .macro-val{font-weight:700;}
+  .macro-val.prot{color:#3b82f6;}
+  .macro-val.carb{color:#22c55e;}
+  .macro-val.fat{color:#f59e0b;}
+  .macro-track{height:6px;background:var(--color-surface-3);border-radius:50px;overflow:hidden;}
+  .macro-fill{height:100%;border-radius:50px;}
+  .prot-fill{background:#3b82f6;}
+  .carb-fill{background:#22c55e;}
+  .fat-fill{background:#f59e0b;}
+
+  .diet-day-sel{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none;margin-bottom:4px;}
+  .diet-day-sel::-webkit-scrollbar{display:none;}
+  .diet-day-btn{flex:0 0 auto;padding:7px 13px;border-radius:50px;font-size:.76rem;font-weight:600;cursor:pointer;border:1.5px solid var(--color-border);background:var(--color-surface);color:var(--color-text-muted);transition:all var(--transition);-webkit-tap-highlight-color:transparent;}
+  .diet-day-btn.active{background:#3b82f6;color:#fff;border-color:transparent;}
+
+  .meal-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:14px;margin-bottom:8px;}
+  .meal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+  .meal-label{font-size:.88rem;font-weight:700;}
+  .meal-time{font-size:.7rem;color:var(--color-text-muted);margin-top:2px;}
+  .meal-prot{background:rgba(59,130,246,.12);color:#3b82f6;border-radius:50px;padding:4px 10px;font-size:.72rem;font-weight:700;white-space:nowrap;}
+  .meal-desc{font-size:.82rem;color:var(--color-text-muted);line-height:1.5;}
+
+  .diet-day-summary{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;font-size:.82rem;}
+
+  .diet-tips{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:var(--radius);padding:14px;margin-bottom:12px;}
+  .diet-tip-title{font-size:.85rem;font-weight:700;color:var(--qui);margin-bottom:8px;}
+  .diet-tips ul{padding-left:16px;}
+  .diet-tips li{font-size:.78rem;color:var(--color-text-muted);margin-bottom:4px;line-height:1.4;}
+
 </style>
 </head>
 <body>
@@ -258,6 +295,9 @@ body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-t
   </button>
   <button class="nav-btn" onclick="switchView('semana')" id="nav-semana">
     <span>📅</span><span>Semana</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('dieta')" id="nav-dieta">
+    <span>🥗</span><span>Dieta</span>
   </button>
   <button class="nav-btn" onclick="switchView('dicas')" id="nav-dicas">
     <span>💡</span><span>Dicas</span>
@@ -649,6 +689,182 @@ document.getElementById('dayTabs').addEventListener('click', e => {
 })();
 
 buildAll();
+
+
+// ===========================
+// DIET DATA
+// ===========================
+const DIET = {
+  macros: { cal: 2840, prot: 172, carb: 363, fat: 78 },
+  refeicoes: [
+    {
+      label: "☀️ Café da Manhã / Pós-treino",
+      time: "~07h30",
+      days: [
+        {day:"SEG", meal:"Iogurte grego (200g) + granola (30g) + banana + pasta de amendoim", prot:25},
+        {day:"TER", meal:"Shake: whey + leite integral (300ml) + aveia (40g) + banana", prot:35},
+        {day:"QUA", meal:"Tapioca (2 un.) + frango desfiado (100g) + queijo coalho + abacate", prot:30},
+        {day:"QUI", meal:"Cottage (150g) + mel + castanhas (20g) + 1 fruta", prot:22},
+        {day:"SEX", meal:"Shake: whey + leite + aveia + morango", prot:35},
+        {day:"SÁB", meal:"Panqueca de aveia + banana + whey + mel", prot:30},
+        {day:"DOM", meal:"Iogurte grego + granola + mix de frutas vermelhas", prot:20},
+      ]
+    },
+    {
+      label: "🍽️ Almoço",
+      time: "~12h30",
+      days: [
+        {day:"SEG", meal:"Frango grelhado (180g) + arroz integral + feijão + salada com azeite", prot:45},
+        {day:"TER", meal:"Salmão grelhado (180g) + batata doce (200g) + legumes no vapor", prot:42},
+        {day:"QUA", meal:"Carne moída magra (180g) + macarrão integral + tomate + brócolis", prot:44},
+        {day:"QUI", meal:"Tilápia (200g) + arroz integral + lentilha + salada", prot:45},
+        {day:"SEX", meal:"Frango (180g) + quinoa (80g) + espinafre refogado + cenoura", prot:47},
+        {day:"SÁB", meal:"Carne vermelha magra (180g) + arroz integral + feijão + salada", prot:43},
+        {day:"DOM", meal:"Frango desfiado (180g) + batata doce (200g) + abobrinha grelhada", prot:42},
+      ]
+    },
+    {
+      label: "🥤 Lanche da Tarde",
+      time: "~16h",
+      days: [
+        {day:"SEG", meal:"🥊 Antes Muay Thai — Banana + pasta de amendoim + whey shake", prot:28},
+        {day:"TER", meal:"🏊 Antes Natação — Pão integral (2 fat.) + atum (1 lata) + azeite", prot:30},
+        {day:"QUA", meal:"🥊 Antes Muay Thai — Banana + whey shake + aveia (30g)", prot:28},
+        {day:"QUI", meal:"🏊 Antes Natação — Iogurte grego (150g) + granola + 1 fruta", prot:18},
+        {day:"SEX", meal:"Ricota (100g) + torrada integral (3 un.) + azeite + tomate", prot:18},
+        {day:"SÁB", meal:"Mix de castanhas (30g) + 1 maçã + iogurte grego (100g)", prot:12},
+        {day:"DOM", meal:"Frutas + queijo cottage (100g)", prot:12},
+      ]
+    },
+    {
+      label: "🌙 Jantar",
+      time: "~20h",
+      days: [
+        {day:"SEG", meal:"Omelete de claras (4 claras + 1 inteiro) + pão integral + salada", prot:32},
+        {day:"TER", meal:"Salmão (150g) + abobrinha refogada + arroz integral (100g)", prot:38},
+        {day:"QUA", meal:"Frango (160g) + legumes grelhados + batata doce (150g)", prot:40},
+        {day:"QUI", meal:"Atum (150g) + macarrão integral + tomate + manjericão", prot:38},
+        {day:"SEX", meal:"Carne magra (160g) + brócolis + cenoura + arroz integral", prot:40},
+        {day:"SÁB", meal:"Tilápia (180g) + quinoa (80g) + espinafre", prot:42},
+        {day:"DOM", meal:"Frango (160g) + arroz + feijão + salada verde", prot:38},
+      ]
+    },
+    {
+      label: "🌛 Ceia (opcional)",
+      time: "~22h",
+      days: Array(7).fill(null).map((_,i)=>({
+        day:["SEG","TER","QUA","QUI","SEX","SÁB","DOM"][i],
+        meal:"Cottage (150g) + pasta de amendoim (1 col) — digestão lenta, ideal pré-sono",
+        prot:20
+      }))
+    }
+  ]
+};
+
+function buildDietView() {
+  const container = document.getElementById('mainContent');
+  const dieta = document.createElement('div');
+  dieta.id = 'view-dieta';
+  dieta.className = 'tab-panel';
+
+  // Macro card
+  const mc = DIET.macros;
+  const macroHtml = `
+    <div class="diet-macro-card">
+      <div class="diet-macro-title">🎯 Meta Diária — ~${mc.cal} kcal</div>
+      <div class="diet-macro-sub">Déficit ~400 kcal · Preservação de massa magra</div>
+      <div class="macro-bars">
+        <div class="macro-bar-item">
+          <div class="macro-bar-label"><span>Proteína</span><span class="macro-val prot">${mc.prot}g</span></div>
+          <div class="macro-track"><div class="macro-fill prot-fill" style="width:${Math.round(mc.prot*4/mc.cal*100)}%"></div></div>
+        </div>
+        <div class="macro-bar-item">
+          <div class="macro-bar-label"><span>Carboidrato</span><span class="macro-val carb">${mc.carb}g</span></div>
+          <div class="macro-track"><div class="macro-fill carb-fill" style="width:${Math.round(mc.carb*4/mc.cal*100)}%"></div></div>
+        </div>
+        <div class="macro-bar-item">
+          <div class="macro-bar-label"><span>Gordura</span><span class="macro-val fat">${mc.fat}g</span></div>
+          <div class="macro-track"><div class="macro-fill fat-fill" style="width:${Math.round(mc.fat*9/mc.cal*100)}%"></div></div>
+        </div>
+      </div>
+    </div>`;
+
+  // Day selector
+  const dayNames = ["SEG","TER","QUA","QUI","SEX","SÁB","DOM"];
+  const dayKeys  = ["seg","ter","qua","qui","sex","sab","dom"];
+  const weekdays = ['dom','seg','ter','qua','qui','sex','sab'];
+  const todayIdx = dayNames.indexOf((weekdays[new Date().getDay()] || 'seg').toUpperCase().replace('SAB','SÁB'));
+  let activeDietDay = Math.max(todayIdx, 0);
+
+  const daySel = document.createElement('div');
+  daySel.className = 'diet-day-sel';
+  dayNames.forEach((d, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'diet-day-btn' + (i === activeDietDay ? ' active' : '');
+    btn.textContent = d;
+    btn.dataset.dietDay = i;
+    btn.onclick = () => selectDietDay(i);
+    daySel.appendChild(btn);
+  });
+
+  // Meals container
+  const mealsWrap = document.createElement('div');
+  mealsWrap.id = 'diet-meals';
+
+  function selectDietDay(idx) {
+    activeDietDay = idx;
+    document.querySelectorAll('.diet-day-btn').forEach((b,i) => b.classList.toggle('active', i === idx));
+    renderMeals(idx);
+  }
+
+  function renderMeals(idx) {
+    mealsWrap.innerHTML = '';
+    let totalProt = 0;
+    DIET.refeicoes.forEach(ref => {
+      const entry = ref.days[idx];
+      if(!entry) return;
+      totalProt += entry.prot || 0;
+      const card = document.createElement('div');
+      card.className = 'meal-card';
+      card.innerHTML = `
+        <div class="meal-header">
+          <div>
+            <div class="meal-label">${ref.label}</div>
+            <div class="meal-time">${ref.time}</div>
+          </div>
+          <div class="meal-prot">${entry.prot}g prot.</div>
+        </div>
+        <div class="meal-desc">${entry.meal}</div>`;
+      mealsWrap.appendChild(card);
+    });
+    // Total proteína do dia
+    const summary = document.createElement('div');
+    summary.className = 'diet-day-summary';
+    summary.innerHTML = `<span>Total proteína do dia</span><span class="macro-val prot">${totalProt}g / ${mc.prot}g meta</span>`;
+    mealsWrap.appendChild(summary);
+  }
+
+  // Tips card
+  const tipsHtml = `
+    <div class="diet-tips">
+      <div class="diet-tip-title">⚡ Estratégia para treino em jejum</div>
+      <ul>
+        <li>Opcional pré-treino: 5–10g BCAA ou café preto puro</li>
+        <li>Priorize proteína logo ao chegar em casa</li>
+        <li>Dias de Muay Thai + natação: não pule o lanche da tarde!</li>
+        <li>Ceia com cottage: proteína de digestão lenta pré-sono</li>
+      </ul>
+    </div>`;
+
+  dieta.innerHTML = macroHtml + tipsHtml;
+  dieta.appendChild(daySel);
+  dieta.appendChild(mealsWrap);
+  container.appendChild(dieta);
+  renderMeals(activeDietDay);
+}
+
+buildDietView();
+
 </script>
 </body>
 </html>
