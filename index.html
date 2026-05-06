@@ -263,6 +263,31 @@ body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-t
   .diet-tips ul{padding-left:16px;}
   .diet-tips li{font-size:.78rem;color:var(--color-text-muted);margin-bottom:4px;line-height:1.4;}
 
+
+  /* COMMENT & LOG */
+  .comment-input{width:100%;padding:9px 12px;border:1.5px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface-2);color:var(--color-text);font-size:.82rem;outline:none;resize:none;font-family:var(--font-body);line-height:1.4;margin-bottom:10px;}
+  .comment-input:focus{border-color:var(--day-color,#3b82f6);}
+  .comment-input::placeholder{color:var(--color-text-faint);}
+
+  /* LOG VIEW */
+  .log-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .log-header h2{font-size:.95rem;font-weight:700;}
+  .log-clear-btn{font-size:.72rem;color:var(--color-text-faint);padding:5px 10px;border:1px solid var(--color-border);border-radius:50px;background:var(--color-surface);cursor:pointer;}
+  .log-empty{text-align:center;padding:40px 20px;color:var(--color-text-muted);font-size:.85rem;}
+  .log-empty-icon{font-size:2.5rem;margin-bottom:10px;}
+  .log-date-group{margin-bottom:16px;}
+  .log-date-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--color-text-faint);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--color-border);}
+  .log-entry{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:6px;}
+  .log-entry-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;}
+  .log-ex-name{font-size:.85rem;font-weight:600;flex:1;padding-right:8px;}
+  .log-day-badge{font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:50px;color:#fff;white-space:nowrap;flex-shrink:0;}
+  .log-details{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+  .log-detail{font-size:.75rem;color:var(--color-text-muted);background:var(--color-surface-3);padding:3px 8px;border-radius:50px;}
+  .log-comment{font-size:.78rem;color:var(--color-text-muted);font-style:italic;margin-top:4px;line-height:1.4;}
+  .log-comment::before{content:"💬 ";}
+  .log-export-btn{width:100%;padding:12px;border:1.5px solid var(--color-border);border-radius:var(--radius-sm);background:var(--color-surface);color:var(--color-text-muted);font-size:.82rem;font-weight:600;cursor:pointer;margin-top:8px;transition:all var(--transition);}
+  .log-export-btn:active{opacity:.7;}
+
 </style>
 </head>
 <body>
@@ -292,6 +317,9 @@ body{font-family:var(--font-body);background:var(--color-bg);color:var(--color-t
 <div class="bottom-nav">
   <button class="nav-btn" onclick="switchView('treino')" id="nav-treino">
     <span>🏋️</span><span>Treino</span>
+  </button>
+  <button class="nav-btn" onclick="switchView('log')" id="nav-log">
+    <span>📋</span><span>Histórico</span>
   </button>
   <button class="nav-btn" onclick="switchView('semana')" id="nav-semana">
     <span>📅</span><span>Semana</span>
@@ -381,6 +409,7 @@ const DAYS = {
 
 // in-memory storage (no localStorage)
 const MEM = {};
+const LOG = []; // {date, dayKey, dayTitle, exName, series, weight, comment}
 
 // ===========================
 // BUILD UI
@@ -445,6 +474,8 @@ function buildAll() {
               <button class="save-btn" style="background:${day.color}" onclick="saveCarga('${eid}')">💾 Salvar</button>
               <span class="saved-note" id="saved-${eid}">✓ Salvo!</span>
             </div>
+            <div class="section-label">Comentário</div>
+            <textarea class="comment-input" id="comment-${eid}" rows="2" placeholder="Ex: aumentar carga na próxima semana, execução boa..." style="--day-color:${day.color}"></textarea>
             <div class="section-label">Marcar séries</div>
             <div class="set-dots" id="dots-${eid}">
               ${Array.from({length:ex.s},(_,s)=>`
@@ -588,7 +619,32 @@ function toggleEx(eid) {
 
 function saveCarga(eid) {
   const val = document.getElementById('carga-' + eid).value;
+  const comment = (document.getElementById('comment-' + eid) || {}).value || '';
   MEM['carga_' + eid] = val;
+  MEM['comment_' + eid] = comment;
+
+  // Parse eid: "seg_0"
+  const parts = eid.split('_');
+  const dayKey = parts[0];
+  const exIdx = parseInt(parts[1]);
+  const day = DAYS[dayKey];
+  const ex = day && day.exercises[exIdx];
+  const seriesDone = MEM['sets_' + eid] || 0;
+
+  if(ex && val) {
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('pt-BR');
+    LOG.unshift({
+      date: dateStr,
+      dayKey, dayTitle: day.title,
+      exName: ex.n,
+      series: seriesDone + '/' + ex.s,
+      weight: val + 'kg',
+      comment: comment
+    });
+    if(typeof renderLog === 'function') renderLog();
+  }
+
   const note = document.getElementById('saved-' + eid);
   note.classList.add('show');
   setTimeout(() => note.classList.remove('show'), 2000);
@@ -689,6 +745,78 @@ document.getElementById('dayTabs').addEventListener('click', e => {
 })();
 
 buildAll();
+
+function buildLogView() {
+  const container = document.getElementById('mainContent');
+  const logView = document.createElement('div');
+  logView.id = 'view-log';
+  logView.className = 'tab-panel';
+  logView.innerHTML = `
+    <div class="log-header">
+      <h2>📋 Histórico de Treinos</h2>
+      <button class="log-clear-btn" onclick="clearLog()">🗑 Limpar</button>
+    </div>
+    <div id="log-body"></div>
+    <button class="log-export-btn" onclick="exportLog()">⬇️ Exportar CSV</button>`;
+  container.appendChild(logView);
+}
+
+function renderLog() {
+  const body = document.getElementById('log-body');
+  if(!body) return;
+  if(LOG.length === 0) {
+    body.innerHTML = '<div class="log-empty"><div class="log-empty-icon">📭</div><div>Nenhum registro ainda.</div><div style="font-size:.75rem;margin-top:6px;color:var(--color-text-faint)">Salve um exercício com carga para aparecer aqui.</div></div>';
+    return;
+  }
+  // Group by date
+  const groups = {};
+  LOG.forEach(e => {
+    if(!groups[e.date]) groups[e.date] = [];
+    groups[e.date].push(e);
+  });
+  const dayColors = {seg:'var(--seg)',ter:'var(--ter)',qua:'var(--qua)',qui:'var(--qui)',sex:'var(--sex)',sab:'var(--off)',dom:'var(--off)'};
+  body.innerHTML = Object.keys(groups).map(date => `
+    <div class="log-date-group">
+      <div class="log-date-label">📅 ${date}</div>
+      ${groups[date].map(e => `
+        <div class="log-entry">
+          <div class="log-entry-top">
+            <div class="log-ex-name">${e.exName}</div>
+            <div class="log-day-badge" style="background:${dayColors[e.dayKey]||'var(--off)'}">
+              ${e.dayKey.toUpperCase()} · ${e.dayTitle}
+            </div>
+          </div>
+          <div class="log-details">
+            <span class="log-detail">⚖️ ${e.weight}</span>
+            <span class="log-detail">📋 ${e.series} séries</span>
+          </div>
+          ${e.comment ? `<div class="log-comment">${e.comment}</div>` : ''}
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function clearLog() {
+  if(LOG.length === 0) return;
+  if(confirm('Limpar todo o histórico?')) { LOG.length = 0; renderLog(); }
+}
+
+function exportLog() {
+  if(LOG.length === 0) { alert('Nenhum registro para exportar.'); return; }
+  const header = 'Data,Dia,Treino,Exercicio,Series,Peso,Comentario';
+  const rows = LOG.map(e =>
+    [e.date, e.dayKey.toUpperCase(), e.dayTitle, '"'+e.exName+'"', e.series, e.weight, '"'+(e.comment||'')+'"'].join(',')
+  );
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'historico-treino.csv';
+  a.click();
+}
+
+buildLogView();
+renderLog();
+
 
 
 // ===========================
